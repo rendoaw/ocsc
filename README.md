@@ -1,4 +1,4 @@
-# Yet Another OpenStack and Contrail Simple Client (OCSC)
+# Just Another OpenStack and Contrail Simple Client (OCSC)
 
 ## Overview
 
