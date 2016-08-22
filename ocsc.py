@@ -19,7 +19,7 @@ import logging
 import logging.config
 import os
 import subprocess
-
+import xmltodict
 
 requests.packages.urllib3.disable_warnings()
 
@@ -124,6 +124,9 @@ def arguments_parser():
     parser.add_argument('--contrail-analytic-find', help='find Contrail analytic instance and print detail. Optional search criteria by --contrail-value <instance name>' )
     parser.add_argument('--contrail-analytic-list', help='list specified Contrail analytic component instances' )
     parser.add_argument('--contrail-analytic-show', help='show Contrail analytic component instance specified by --contrail-value <instance id>' )
+    parser.add_argument('--contrail-vrouter-get-vrf-routes', help='Dump routing table of a VRF on specific compute. Usage: --contrail-vrouter-get-vrf-routes <vrfname>  --contrail-vrouter-host <vrouter hostname/IP>' )
+    parser.add_argument('--contrail-vrouter-list-vrf', action='store_true', help='List VRF available in specific compute node. Usage: --contrail-vrouter-list-vrf --contrail-vrouter-host <vrouter hostname/IP>' )
+    parser.add_argument('--contrail-vrouter-host', help='vrouter hostname or IP' )
     parser.set_defaults(detail=False)
     args = parser.parse_args()
     return args
@@ -295,7 +298,6 @@ class my_contrail(my_client):
         self.service_data = r.json()
         logger.info("status:"+str(r.status_code))
         logger.debug("data:"+jsonpretty(r.json()))
-        print jsonpretty(self.service_data)
         return status, data
 
     
@@ -325,6 +327,78 @@ class my_contrail(my_client):
         else:
             url += ":"+port+"/"+resource_type+"s"
         return url
+
+    
+    def introspect_access(self, host="", parameter=""):
+        url = "http://"+host+":8085/"+parameter
+        headers = {'Content-Type':'application/json', 'Cache-Control': 'no-cache', 'X-Auth-Token': self.token }
+        logger.info("url = "+url)
+        logger.debug(get_curl_command(url, "GET", headers, None))
+        r = requests.get(url, verify=False, headers=headers)
+        status = r.status_code
+        if status == 404:
+            return status, { "Error": r.text }
+        data = xmltodict.parse(r.text, xml_attribs=True)
+        logger.info("status:"+str(r.status_code))
+        logger.debug("data:"+jsonpretty(data))
+        return status, data
+
+    
+    def introspect_get_vrf_list(self, host):
+        parameter = "Snh_VrfListReq?name="
+        status, data = self.introspect_access(host, parameter)
+        result = "#VRF Name,ucindex,uc6index,mcindex,l2index,vxlan_id\n"
+        if status == 200:
+            try:
+                vrflist = data["__VrfListResp_list"]["VrfListResp"]["vrf_list"]["list"]["VrfSandeshData"]
+            except:
+                return status, { 'Error', 'VrfSandeshData can not be decoded' }
+            for item in vrflist:
+                result += item["name"]["#text"]+","+item["ucindex"]["#text"]+","+item["uc6index"]["#text"]+","+item["mcindex"]["#text"]+","+item["l2index"]["#text"]+","+item["vxlan_id"]["#text"]
+                result += "\n"
+        return status, data, result
+
+
+    def introspect_get_Layer2Route(self, host="", vn_name="", vrf_id=""):
+        #parameter = "Snh_Layer2RouteReq?vrf_index="+vrf_id+"&mac=&stale="
+        parameter = "Snh_PageReq?x=begin:-1,end:-1,table:"+vn_name+".l2.route.0,"
+        status, data = self.introspect_access(host, parameter)
+        return status, data
+
+
+    def introspect_get_Inet4UcRoute(self, host="", vn_name="", vrf_id=""):
+        #parameter = "Snh_Inet4UcRouteReq?vrf_index="+vrf_id+"&src_ip=&prefix_len=&stale="
+        parameter = "Snh_PageReq?x=begin:-1,end:-1,table:"+vn_name+".uc.route.0,"
+        status, data = self.introspect_access(host, parameter)
+        return status, data
+
+
+    def introspect_get_Inet6UcRoute(self, host="", vn_name="", vrf_id=""):
+        #parameter = "Snh_Inet4UcRouteReq?vrf_index="+vrf_id+"&src_ip=&prefix_len=&stale="
+        parameter = "Snh_PageReq?x=begin:-1,end:-1,table:"+vn_name+".uc.route6.0,"
+        status, data = self.introspect_access(host, parameter)
+        return status, data
+
+
+    def introspect_get_Inet4McRoute(self, host="", vn_name="", vrf_id=""):
+        #parameter = "Snh_Inet4UcRouteReq?vrf_index="+vrf_id+"&src_ip=&prefix_len=&stale="
+        parameter = "Snh_PageReq?x=begin:-1,end:-1,table:"+vn_name+".mc.route.0,"
+        status, data = self.introspect_access(host, parameter)
+        return status, data
+
+
+    def introspect_get_all_routes(self, host="", vn_name="", vrf_id=""):
+        routes = {}
+        status, data = self.introspect_get_Inet4UcRoute(host=host, vn_name=vn_name)
+        routes["Inet4UcRoute"] = data
+        status, data = self.introspect_get_Inet6UcRoute(host=host, vn_name=vn_name)
+        routes["Inet6UcRoute"] = data
+        status, data = self.introspect_get_Inet4McRoute(host=host, vn_name=vn_name)
+        routes["Inet4McRoute"] = data
+        status, data = self.introspect_get_Layer2Route(host=host, vn_name=vn_name)
+        routes["InetLayer2Route"] = data
+        return routes
+
 
 
 
@@ -476,6 +550,8 @@ if __name__ == "__main__":
         is_contrail_mode = True
     if args.contrail_analytic_list or args.contrail_analytic_show or args.contrail_analytic_find:
         is_contrail_mode = True
+    if args.contrail_vrouter_get_vrf_routes or args.contrail_vrouter_list_vrf or args.contrail_vrouter_host:
+        is_contrail_mode = True
     
     '''initialize contrail client only if any contrail related parameter is detected'''
     if is_contrail_mode == True:
@@ -546,6 +622,18 @@ if __name__ == "__main__":
             else:
                 print jsonpretty(data)
 
+        if args.contrail_vrouter_list_vrf and args.contrail_vrouter_host: 
+            status, data, csv = contrail_client.introspect_get_vrf_list(args.contrail_vrouter_host)
+            if args.csv:
+                print csv
+            else:
+                print jsonpretty(data)
+            
+        if args.contrail_vrouter_get_vrf_routes and args.contrail_vrouter_host: 
+            data = contrail_client.introspect_get_all_routes(args.contrail_vrouter_host, args.contrail_vrouter_get_vrf_routes)
+            print jsonpretty(data)
+
+
 
     '''initialize openstack client'''
     client = my_openstack(auth_url=env["OS_AUTH_URL"]+"/tokens", username=env["OS_USERNAME"], password=env["OS_PASSWORD"], tenant=env["OS_TENANT_NAME"])
@@ -601,7 +689,5 @@ if __name__ == "__main__":
         
         status, data = client.stack_create(args.stack_create, stack_template, stack_parameter)
         print jsonpretty(data)
-
-
 
 

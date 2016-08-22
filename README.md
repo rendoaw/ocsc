@@ -3,12 +3,28 @@
 ## Overview
 
 In a nutshel, OCSC is a single script that serves as OpenStack and Contrail client. The purpose of this script is mainly for OpenStack/Contrail troubleshooting or system administration.
-
 By design, this script is connecting directly to OpenStack and Contrail REST API instead of using OpenStack client comand line or Contrail VNC API. This way, we do not need to install any Contrail or OpenStack client package in order to send or retrive the data. 
-
 The script has been built based on my personal experience during OpenStack or Contrail operation troubleshooting, so it will not have complete functionality as native OpenStack CLI client and it may or may not applicable to your use cases. 
-
 Additionally, i believe we can use the script as a starting point to learn about raw REST API from OpenStack and Contrail. 
+
+
+## What you can do with current version
+
+#### OpenStack 
+
+* Get authentication token
+* List and show detail information of many of OpenStack components, e.g: nova, glance image, virtual-networks, floating IP, etc.
+* Find specific component resource and display its detail information
+* Create a HEAT stack (limited)
+
+
+#### Contrail
+
+* List and show detail information of many of Contrail components e.g: virtual-network, vrouter, xmpp-peer, etc
+    * And, since Contrail API also cover OpenStack component, you can also get the detail information of the VM instance, and other things
+* Find specific Contrail component resource and display its detail information
+* List and display detail Contrail analytics data, e.g: VM CPU info, vrouter node info, etc
+* List and display detail routing table from each vrouter node
 
 
 ## Pre-requisites
@@ -679,6 +695,206 @@ Similar as previous example, you can do any list (--contrail-analytic-list), fin
             "vrouter": "rungkut-ct1-compute18"
         }
     }
+    ```
+
+
+## Contrail Sandesh API
+
+* List all VRF on a compute node/vrouter node
+
+    ```
+    $ ./ocsc.py --contrail-vrouter-list-vrf --contrail-vrouter-host 10.200.155.34 --csv
+    #VRF Name,ucindex,uc6index,mcindex,l2index,vxlan_id
+    default-domain:admin:launchTest1-net_12:launchTest1-net_12,5,5,5,5,334
+    default-domain:admin:launchTest1-net_24:launchTest1-net_24,6,6,6,6,311
+    default-domain:admin:private2:private2,1,1,1,1,5
+    ...deleted...
+    ```
+
+* Get all routing table of a specific VRF on a compute/vrouter node
+
+    ```
+    {
+        "Inet4UcRoute": {
+            "__Inet4UcRouteResp_list": {
+                "@type": "slist",
+                "Inet4UcRouteResp": [
+                    {
+                        "@type": "sandesh",
+                        "route_list": {
+                            "@type": "list",
+                            "@identifier": "1",
+                            "list": {
+                                "@type": "struct",
+                                "@size": "100",
+                                "RouteUcSandeshData": [
+                                    {
+                                        "src_ip": {
+                                            "@type": "string",
+                                            "@identifier": "1",
+                                            "#text": "0.0.0.0"
+
+                                            ...deleted...
+
+
+                                    {
+                                        "src_ip": {
+                                            "@type": "string",
+                                            "@identifier": "1",
+                                            "#text": "172.19.2.10"
+                                        },
+                                        "src_plen": {
+                                            "@type": "i32",
+                                            "@identifier": "2",
+                                            "#text": "32"
+                                        },
+                                        "src_vrf": {
+                                            "@type": "string",
+                                            "@identifier": "3",
+                                            "@link": "VrfListReq",
+                                            "#text": "default-domain:admin:private2:private2"
+                                        },
+                                        "path_list": {
+                                            "@type": "list",
+                                            "@identifier": "4",
+                                            "list": {
+                                                "@type": "struct",
+                                                "@size": "2",
+                                                "PathSandeshData": [
+                                                    {
+                                                        "nh": {
+                                                            "@type": "struct",
+                                                            "@identifier": "1",
+                                                            "NhSandeshData": {
+                                                                "type": {
+                                                                    "@type": "string",
+                                                                    "@identifier": "1",
+                                                                    "#text": "tunnel"
+                                                                },
+                                                                "ref_count": {
+                                                                    "@type": "i32",
+                                                                    "@identifier": "2",
+                                                                    "#text": "277"
+                                                                },
+                                                                "valid": {
+                                                                    "@type": "string",
+                                                                    "@identifier": "3",
+                                                                    "#text": "true"
+                                                                },
+                                                                "policy": {
+                                                                    "@type": "string",
+                                                                    "@identifier": "4",
+                                                                    "#text": "disabled"
+                                                                },
+                                                                "sip": {
+                                                                    "@type": "string",
+                                                                    "@identifier": "5",
+                                                                    "#text": "10.200.155.34"
+                                                                },
+                                                                "dip": {
+                                                                    "@type": "string",
+                                                                    "@identifier": "6",
+                                                                    "#text": "10.200.155.35"
+                                                                },
+                                                                "vrf": {
+                                                                    "@type": "string",
+                                                                    "@identifier": "7",
+                                                                    "@link": "VrfListReq",
+                                                                    "#text": "default-domain:default-project:ip-fabric:__default__"
+                                                                },
+                                                                "mac": {
+                                                                    "@type": "string",
+                                                                    "@identifier": "9",
+                                                                    "#text": "c:c4:7a:57:e:40"
+                                                                },
+                                                                "tunnel_type": {
+                                                                    "@type": "string",
+                                                                    "@identifier": "16",
+                                                                    "#text": "MPLSoGRE"
+                                                                },
+                                                                "nh_index": {
+                                                                    "@type": "i32",
+                                                                    "@identifier": "21",
+                                                                    "#text": "42"
+                                                                },
+                                                                "vxlan_flag": {
+                                                                    "@type": "bool",
+                                                                    "@identifier": "24",
+                                                                    "#text": "false"
+                                                                }
+                                                            }
+                                                        },
+                                                        "label": {
+                                                            "@type": "i32",
+                                                            "@identifier": "2",
+                                                            "#text": "108"
+                                                        },
+                                                        "vxlan_id": {
+                                                            "@type": "i32",
+                                                            "@identifier": "3",
+                                                            "#text": "0"
+                                                        },
+                                                        "peer": {
+                                                            "@type": "string",
+                                                            "@identifier": "4",
+                                                            "#text": "10.200.155.33"
+                                                        },
+                                                        "dest_vn": {
+                                                            "@type": "string",
+                                                            "@identifier": "5",
+                                                            "@link": "VnListReq",
+                                                            "#text": "default-domain:admin:private2"
+                                                        },
+                                                        "unresolved": {
+                                                            "@type": "string",
+                                                            "@identifier": "6",
+                                                            "#text": "false"
+                                                        },
+                                                        "sg_list": {
+                                                            "@type": "list",
+                                                            "@identifier": "10",
+                                                            "list": {
+                                                                "@type": "i32",
+                                                                "@size": "1",
+                                                                "element": "8000001"
+                                                            }
+                                                        },
+                                                        "supported_tunnel_type": {
+                                                            "@type": "string",
+                                                            "@identifier": "11",
+                                                            "#text": "MPLSoGRE MPLSoUDP"
+                                                        },
+                                                        "active_tunnel_type": {
+                                                            "@type": "string",
+                                                            "@identifier": "12",
+                                                            "#text": "MPLSoGRE"
+                                                        },
+                                                        "stale": {
+                                                            "@type": "bool",
+                                                            "@identifier": "13",
+                                                            "#text": "false"
+                                                        },
+                                                        "path_preference_data": {
+                                                            "@type": "struct",
+                                                            "@identifier": "14",
+                                                            "PathPreferenceSandeshData": {
+                                                                "sequence": {
+                                                                    "@type": "i32",
+                                                                    "@identifier": "1",
+                                                                    "#text": "0"
+                                                                },
+                                                                "preference": {
+                                                                    "@type": "i32",
+                                                                    "@identifier": "2",
+                                                                    "#text": "100"
+                                                                },
+                                                                "ecmp": {
+                                                                    "@type": "bool",
+                                                                    "@identifier": "3",
+                                                                    "#text": "false"
+                                                                },
+
+                                                    ...deleted...
     ```
 
 
