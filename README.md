@@ -908,7 +908,7 @@ Similar as previous example, you can do any list (--contrail-analytic-list), fin
 
 ## Help Needed
 
-If anyone has information how to query vrouter and control node routing table via REST API, please do let me know. Thanks !!!
+If anyone has information how to query every vrouter routing table from central Contrail controller instead of going to each vrouter introspect port, please let me know. Thanks!!!
 
 
 
