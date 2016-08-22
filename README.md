@@ -27,11 +27,20 @@ Additionally, i believe we can use the script as a starting point to learn about
 * List and display detail routing table from each vrouter node
 
 
+#### Test environment
+
+This script is created on OSX with Python 2.7, and most of the time is executed on either Ubuntu 14.04 or Centos 6.x (with python 2.7 is manually installed).
+My OpenStack/Contrail environments are:
+* OpenStack Juno + Contrail 2.2
+* OpenStack Kilo + Contrail 3.0
+
+
 ## Pre-requisites
 
 The following additional python modules are required. Depend on your Python 2.x version, they may not be installed by default. 
 
 * requests
+* xmltodict
 * argparse
 * logging
 
@@ -316,6 +325,92 @@ As common OpenStack operation, you can source your env variable before running t
             ..deleted..
     ```
 
+
+* List all contrail related resources inside a project
+
+    ```
+    $ ./ocsc.py --contrail-find project --contrail-value admin
+    {
+        "8502bbac-feab-4c70-b830-207c8a7753ef": {
+            "project": {
+                "virtual_networks": [
+                    {
+                        "to": [
+                            "default-domain",
+                            "admin",
+                            "private2"
+                        ],
+                        "href": "http://10.200.155.33:8082/virtual-network/e4dbd4b6-222e-49b9-bffb-b8c73d47a5b9",
+                        "uuid": "e4dbd4b6-222e-49b9-bffb-b8c73d47a5b9"
+                    },
+                    {
+                        "to": [
+                            "default-domain",
+                            "admin",
+                            "vmx01-re"
+                        ],
+                        "href": "http://10.200.155.33:8082/virtual-network/93f8f7d4-1d36-4e4d-a89f-bd94b31533a6",
+                        "uuid": "93f8f7d4-1d36-4e4d-a89f-bd94b31533a6"
+    ...deleted..
+    ```
+
+
+* List all virtual machine and its detail (WARNING: it may create a very long output, so better to redirect to a file)
+
+```
+$ ./ocsc.py --contrail-find virtual-machine
+{
+    "c2ee8b62-dfb9-43c0-9569-5058a6614bc8": {
+        "virtual-machine": {
+            "fq_name": [
+                "c2ee8b62-dfb9-43c0-9569-5058a6614bc8"
+            ],
+            "uuid": "c2ee8b62-dfb9-43c0-9569-5058a6614bc8",
+            "virtual_machine_interface_back_refs": [
+                {
+                    "to": [
+                        "default-domain",
+                        "admin",
+                        "linux100_port_0-bvdld75lhitn"
+                    ],
+                    "href": "http://10.200.155.33:8082/virtual-machine-interface/09d198a7-b7c3-4cc0-a8bb-12cac3b0c705",
+                    "attr": null,
+                    "uuid": "09d198a7-b7c3-4cc0-a8bb-12cac3b0c705"
+                },
+                {
+                    "to": [
+                        "default-domain",
+                        "admin",
+                        "linux100_port_1-nwbhpiqzpib4"
+                    ],
+                    "href": "http://10.200.155.33:8082/virtual-machine-interface/9e668575-6461-44ae-a25f-dbd50540cdbb",
+                    "attr": null,
+                    "uuid": "9e668575-6461-44ae-a25f-dbd50540cdbb"
+                }
+            ],
+            "href": "http://10.200.155.33:8082/virtual-machine/c2ee8b62-dfb9-43c0-9569-5058a6614bc8",
+            "id_perms": {
+                "enable": true,
+                "description": null,
+                "creator": null,
+                "created": "2016-07-21T02:53:55.416207",
+                "user_visible": true,
+                "last_modified": "2016-07-21T02:53:55.416207",
+                "permissions": {
+                    "owner": "cloud-admin",
+                    "owner_access": 7,
+                    "other_access": 7,
+                    "group": "cloud-admin-group",
+                    "group_access": 7
+                },
+                "uuid": {
+                    "uuid_mslong": 14046317544591672256,
+                    "uuid_lslong": 10766224725884619720
+                }
+            },
+
+    ...deleted...
+```
 
 * List virtual-networks
 
