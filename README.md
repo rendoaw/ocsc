@@ -809,189 +809,193 @@ Similar as previous example, you can do any list (--contrail-analytic-list), fin
 * Get all routing table of a specific VRF on a compute/vrouter node
 
     ```
+    $ ./ocsc.py --contrail-vrouter-get-vrf-routes default-domain:admin:public:public --contrail-vrouter-host 192.168.1.42
     {
         "Inet4UcRoute": {
             "__Inet4UcRouteResp_list": {
-                "@type": "slist",
-                "Inet4UcRouteResp": [
-                    {
-                        "@type": "sandesh",
-                        "route_list": {
-                            "@type": "list",
-                            "@identifier": "1",
-                            "list": {
-                                "@type": "struct",
-                                "@size": "100",
-                                "RouteUcSandeshData": [
-                                    {
-                                        "src_ip": {
-                                            "@type": "string",
-                                            "@identifier": "1",
-                                            "#text": "0.0.0.0"
-
-                                            ...deleted...
-
-
-                                    {
-                                        "src_ip": {
-                                            "@type": "string",
-                                            "@identifier": "1",
-                                            "#text": "172.19.2.10"
-                                        },
-                                        "src_plen": {
-                                            "@type": "i32",
-                                            "@identifier": "2",
-                                            "#text": "32"
-                                        },
-                                        "src_vrf": {
-                                            "@type": "string",
-                                            "@identifier": "3",
-                                            "@link": "VrfListReq",
-                                            "#text": "default-domain:admin:private2:private2"
-                                        },
-                                        "path_list": {
-                                            "@type": "list",
-                                            "@identifier": "4",
-                                            "list": {
-                                                "@type": "struct",
-                                                "@size": "2",
-                                                "PathSandeshData": [
-                                                    {
-                                                        "nh": {
-                                                            "@type": "struct",
-                                                            "@identifier": "1",
-                                                            "NhSandeshData": {
-                                                                "type": {
-                                                                    "@type": "string",
-                                                                    "@identifier": "1",
-                                                                    "#text": "tunnel"
-                                                                },
-                                                                "ref_count": {
-                                                                    "@type": "i32",
-                                                                    "@identifier": "2",
-                                                                    "#text": "277"
-                                                                },
-                                                                "valid": {
-                                                                    "@type": "string",
-                                                                    "@identifier": "3",
-                                                                    "#text": "true"
-                                                                },
-                                                                "policy": {
-                                                                    "@type": "string",
-                                                                    "@identifier": "4",
-                                                                    "#text": "disabled"
-                                                                },
-                                                                "sip": {
-                                                                    "@type": "string",
-                                                                    "@identifier": "5",
-                                                                    "#text": "10.200.155.34"
-                                                                },
-                                                                "dip": {
-                                                                    "@type": "string",
-                                                                    "@identifier": "6",
-                                                                    "#text": "10.200.155.35"
-                                                                },
-                                                                "vrf": {
-                                                                    "@type": "string",
-                                                                    "@identifier": "7",
-                                                                    "@link": "VrfListReq",
-                                                                    "#text": "default-domain:default-project:ip-fabric:__default__"
-                                                                },
-                                                                "mac": {
-                                                                    "@type": "string",
-                                                                    "@identifier": "9",
-                                                                    "#text": "c:c4:7a:57:e:40"
-                                                                },
-                                                                "tunnel_type": {
-                                                                    "@type": "string",
-                                                                    "@identifier": "16",
-                                                                    "#text": "MPLSoGRE"
-                                                                },
-                                                                "nh_index": {
-                                                                    "@type": "i32",
-                                                                    "@identifier": "21",
-                                                                    "#text": "42"
-                                                                },
-                                                                "vxlan_flag": {
-                                                                    "@type": "bool",
-                                                                    "@identifier": "24",
-                                                                    "#text": "false"
-                                                                }
-                                                            }
-                                                        },
-                                                        "label": {
-                                                            "@type": "i32",
-                                                            "@identifier": "2",
-                                                            "#text": "108"
-                                                        },
-                                                        "vxlan_id": {
-                                                            "@type": "i32",
-                                                            "@identifier": "3",
-                                                            "#text": "0"
-                                                        },
-                                                        "peer": {
-                                                            "@type": "string",
-                                                            "@identifier": "4",
-                                                            "#text": "10.200.155.33"
-                                                        },
-                                                        "dest_vn": {
-                                                            "@type": "string",
-                                                            "@identifier": "5",
-                                                            "@link": "VnListReq",
-                                                            "#text": "default-domain:admin:private2"
-                                                        },
-                                                        "unresolved": {
-                                                            "@type": "string",
-                                                            "@identifier": "6",
-                                                            "#text": "false"
-                                                        },
-                                                        "sg_list": {
-                                                            "@type": "list",
-                                                            "@identifier": "10",
-                                                            "list": {
-                                                                "@type": "i32",
-                                                                "@size": "1",
-                                                                "element": "8000001"
-                                                            }
-                                                        },
-                                                        "supported_tunnel_type": {
-                                                            "@type": "string",
-                                                            "@identifier": "11",
-                                                            "#text": "MPLSoGRE MPLSoUDP"
-                                                        },
-                                                        "active_tunnel_type": {
-                                                            "@type": "string",
-                                                            "@identifier": "12",
-                                                            "#text": "MPLSoGRE"
-                                                        },
-                                                        "stale": {
-                                                            "@type": "bool",
-                                                            "@identifier": "13",
-                                                            "#text": "false"
-                                                        },
-                                                        "path_preference_data": {
-                                                            "@type": "struct",
-                                                            "@identifier": "14",
-                                                            "PathPreferenceSandeshData": {
-                                                                "sequence": {
-                                                                    "@type": "i32",
-                                                                    "@identifier": "1",
-                                                                    "#text": "0"
-                                                                },
-                                                                "preference": {
-                                                                    "@type": "i32",
-                                                                    "@identifier": "2",
-                                                                    "#text": "100"
-                                                                },
-                                                                "ecmp": {
-                                                                    "@type": "bool",
-                                                                    "@identifier": "3",
-                                                                    "#text": "false"
-                                                                },
+                "Inet4UcRouteResp": {
+                    "route_list": {
+                        "list": {
+                            "RouteUcSandeshData": [
+                                {
+                                    "src_ip": "0.0.0.0",
+                                    "src_plen": "0",
+                                    "src_vrf": "default-domain:admin:public:public",
+                                    "path_list": {
+                                        "list": {
+                                            "PathSandeshData": [
+                                                {
+                                                    "nh": {
+                                                        "NhSandeshData": {
+                                                            "type": "tunnel",
+                                                            "ref_count": "6",
+                                                            "valid": "true",
+                                                            "policy": "disabled",
+                                                            "sip": "192.168.1.42",
+                                                            "dip": "192.168.1.27",
+                                                            "vrf": "default-domain:default-project:ip-fabric:__default__",
+                                                            "mac": "0:c:29:c3:58:c8",
+                                                            "tunnel_type": "MPLSoGRE",
+                                                            "nh_index": "11",
+                                                            "vxlan_flag": "false"
+                                                        }
+                                                    },
+                                                    "label": "16",
+                                                    "vxlan_id": "0",
+                                                    "peer": "192.168.1.42",
+                                                    "dest_vn_list": {
+                                                        "list": {
+                                                            "element": "default-domain:admin:public"
+                                                        }
+                                                    },
+                                                    "unresolved": "false",
+                                                    "sg_list": {
+                                                        "list": null
+                                                    },
+                                                    "supported_tunnel_type": "MPLSoGRE",
+                                                    "active_tunnel_type": "MPLSoGRE",
+                                                    "stale": "false",
+                                                    "path_preference_data": {
+                                                        "PathPreferenceSandeshData": {
+                                                            "sequence": "0",
+                                                            "preference": "100",
+                                                            "ecmp": "false",
+                                                            "wait_for_traffic": "false"
+                                                        }
+                                                    },
 
                                                     ...deleted...
     ```
 
+
+* Get specific routing table on a compute node
+
+    ```
+    earth:ocsc rendo$ ./ocsc.py --contrail-vrouter-get-vrf-routes default-domain:admin:public:public --contrail-vrouter-host 192.168.1.42 --contrail-vrouter-route-dest 10.16.0.4
+    {
+        "Inet4UcRoute": {
+            "10.16.0.4": [
+                {
+                    "src_ip": "10.16.0.4",
+                    "src_plen": "32",
+                    "src_vrf": "default-domain:admin:public:public",
+                    "path_list": {
+                        "list": {
+                            "PathSandeshData": [
+                                {
+                                    "nh": {
+                                        "NhSandeshData": {
+                                            "type": "tunnel",
+                                            "ref_count": "18",
+                                            "valid": "true",
+                                            "policy": "disabled",
+                                            "sip": "192.168.1.42",
+                                            "dip": "192.168.1.45",
+                                            "vrf": "default-domain:default-project:ip-fabric:__default__",
+                                            "mac": "0:50:56:39:af:da",
+                                            "tunnel_type": "MPLSoUDP",
+                                            "nh_index": "17",
+                                            "vxlan_flag": "false"
+                                        }
+                                    },
+                                    "label": "17",
+                                    "vxlan_id": "0",
+                                    "peer": "192.168.1.42",
+                                    "dest_vn_list": {
+                                        "list": {
+                                            "element": "default-domain:admin:public"
+                                        }
+                                    },
+                                    "unresolved": "false",
+                                    "sg_list": {
+                                        "list": {
+                                            "element": "8000004"
+                                        }
+                                    },
+                                    "supported_tunnel_type": "MPLSoGRE MPLSoUDP",
+                                    "active_tunnel_type": "MPLSoUDP",
+                                    "stale": "false",
+                                    "path_preference_data": {
+                                        "PathPreferenceSandeshData": {
+                                            "sequence": "1",
+                                            "preference": "200",
+                                            "ecmp": "false",
+                                            "wait_for_traffic": "false"
+                                        }
+                                    },
+                                    "active_label": "17",
+                                    "ecmp_hashing_fields": "l3-source-address,l3-destination-address,l4-protocol,l4-source-port,l4-destination-port,",
+                                    "communities": {
+                                        "list": null
+                                    }
+                                },
+                                {
+                                    "nh": {
+                                        "NhSandeshData": {
+                                            "type": "tunnel",
+                                            "ref_count": "18",
+                                            "valid": "true",
+                                            "policy": "disabled",
+                                            "sip": "192.168.1.42",
+                                            "dip": "192.168.1.45",
+                                            "vrf": "default-domain:default-project:ip-fabric:__default__",
+                                            "mac": "0:50:56:39:af:da",
+                                            "tunnel_type": "MPLSoUDP",
+                                            "nh_index": "17",
+                                            "vxlan_flag": "false"
+                                        }
+                                    },
+                                    "label": "17",
+                                    "vxlan_id": "0",
+                                    "peer": "192.168.1.43",
+                                    "dest_vn_list": {
+                                        "list": {
+                                            "element": "default-domain:admin:public"
+                                        }
+                                    },
+                                    "unresolved": "false",
+                                    "sg_list": {
+                                        "list": {
+                                            "element": "8000004"
+                                        }
+                                    },
+                                    "supported_tunnel_type": "MPLSoGRE MPLSoUDP",
+                                    "active_tunnel_type": "MPLSoUDP",
+                                    "stale": "false",
+                                    "path_preference_data": {
+                                        "PathPreferenceSandeshData": {
+                                            "sequence": "1",
+                                            "preference": "200",
+                                            "ecmp": "false",
+                                            "wait_for_traffic": "false"
+                                        }
+                                    },
+                                    "active_label": "17",
+                                    "ecmp_hashing_fields": "l3-source-address,l3-destination-address,l4-protocol,l4-source-port,l4-destination-port,",
+                                    "communities": {
+                                        "list": null
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "ipam_subnet_route": "true",
+                    "proxy_arp": "false",
+                    "multicast": "false"
+                }
+            ]
+        },
+        "Inet4McRoute": {
+            "10.16.0.4": []
+        },
+        "InetLayer2Route": {
+            "10.16.0.4": []
+        },
+        "Inet6UcRoute": {
+            "10.16.0.4": []
+        }
+    }
+    ```
 
 ## To Do
 

@@ -125,6 +125,7 @@ def arguments_parser():
     parser.add_argument('--contrail-analytic-list', help='list specified Contrail analytic component instances' )
     parser.add_argument('--contrail-analytic-show', help='show Contrail analytic component instance specified by --contrail-value <instance id>' )
     parser.add_argument('--contrail-vrouter-get-vrf-routes', help='Dump routing table of a VRF on specific compute. Usage: --contrail-vrouter-get-vrf-routes <vrfname>  --contrail-vrouter-host <vrouter hostname/IP>' )
+    parser.add_argument('--contrail-vrouter-route-dest', help='Get routing table for specified IP. Usage: --contrail-vrouter-get-vrf-routes <vrfname>  --contrail-vrouter-host <vrouter hostname/IP> --contrail-vrouter-route-ip <IP address/Network Address>' )
     parser.add_argument('--contrail-vrouter-list-vrf', action='store_true', help='List VRF available in specific compute node. Usage: --contrail-vrouter-list-vrf --contrail-vrouter-host <vrouter hostname/IP>' )
     parser.add_argument('--contrail-vrouter-host', help='vrouter hostname or IP' )
     parser.set_defaults(detail=False)
@@ -338,14 +339,18 @@ class my_contrail(my_client):
         status = r.status_code
         if status == 404:
             return status, { "Error": r.text }
-        data = xmltodict.parse(r.text, xml_attribs=True)
+        data = xmltodict.parse(r.text, xml_attribs=False)
+        for key in data:
+            if "Pagination" in data[key]:
+                del data[key]["Pagination"]
         logger.info("status:"+str(r.status_code))
         logger.debug("data:"+jsonpretty(data))
         return status, data
 
     
     def introspect_get_vrf_list(self, host):
-        parameter = "Snh_VrfListReq?name="
+        #parameter = "Snh_VrfListReq?name="
+        parameter = "Snh_PageReq?x=begin:-1,end:-1,table:db.vrf.0,"
         status, data = self.introspect_access(host, parameter)
         result = "#VRF Name,ucindex,uc6index,mcindex,l2index,vxlan_id\n"
         if status == 200:
@@ -354,48 +359,79 @@ class my_contrail(my_client):
             except:
                 return status, { 'Error', 'VrfSandeshData can not be decoded' }
             for item in vrflist:
-                result += item["name"]["#text"]+","+item["ucindex"]["#text"]+","+item["uc6index"]["#text"]+","+item["mcindex"]["#text"]+","+item["l2index"]["#text"]+","+item["vxlan_id"]["#text"]
+                result += item["name"]+","+item["ucindex"]+","+item["uc6index"]+","+item["mcindex"]+","+item["l2index"]+","+item["vxlan_id"]
                 result += "\n"
         return status, data, result
 
 
-    def introspect_get_Layer2Route(self, host="", vn_name="", vrf_id=""):
+    def introspect_get_Layer2Route(self, host="", vn_name="", vrf_id="", target=""):
         #parameter = "Snh_Layer2RouteReq?vrf_index="+vrf_id+"&mac=&stale="
         parameter = "Snh_PageReq?x=begin:-1,end:-1,table:"+vn_name+".l2.route.0,"
         status, data = self.introspect_access(host, parameter)
+        if target != "":
+            result = {}
+            result[target] = []
+            for item in data["__BridgeRouteResp_list"]["BridgeRouteResp"]["route_list"]["list"]["RouteL2SandeshData"]:
+                if item["mac"] == target:
+                    result[target].append(item)
+            data = result
         return status, data
 
 
-    def introspect_get_Inet4UcRoute(self, host="", vn_name="", vrf_id=""):
+    def introspect_get_Inet4UcRoute(self, host="", vn_name="", vrf_id="", target=""):
         #parameter = "Snh_Inet4UcRouteReq?vrf_index="+vrf_id+"&src_ip=&prefix_len=&stale="
         parameter = "Snh_PageReq?x=begin:-1,end:-1,table:"+vn_name+".uc.route.0,"
         status, data = self.introspect_access(host, parameter)
+        if target != "":
+            result = {}
+            result[target] = []
+            for item in data["__Inet4UcRouteResp_list"]["Inet4UcRouteResp"]["route_list"]["list"]["RouteUcSandeshData"]:
+                if item["src_ip"] == target:
+                    result[target].append(item)
+            data = result
         return status, data
 
 
-    def introspect_get_Inet6UcRoute(self, host="", vn_name="", vrf_id=""):
+    def introspect_get_Inet6UcRoute(self, host="", vn_name="", vrf_id="", target=""):
         #parameter = "Snh_Inet4UcRouteReq?vrf_index="+vrf_id+"&src_ip=&prefix_len=&stale="
         parameter = "Snh_PageReq?x=begin:-1,end:-1,table:"+vn_name+".uc.route6.0,"
         status, data = self.introspect_access(host, parameter)
+        if target != "":
+            result = {}
+            result[target] = []
+            for item in data["__Inet6UcRouteResp_list"]["Inet6UcRouteResp"]["route_list"]["list"]["RouteUcSandeshData"]:
+                if item["src_ip"] == target:
+                    result[target].append(item)
+            data = result
         return status, data
 
 
-    def introspect_get_Inet4McRoute(self, host="", vn_name="", vrf_id=""):
+    def introspect_get_Inet4McRoute(self, host="", vn_name="", vrf_id="", target=""):
         #parameter = "Snh_Inet4UcRouteReq?vrf_index="+vrf_id+"&src_ip=&prefix_len=&stale="
         parameter = "Snh_PageReq?x=begin:-1,end:-1,table:"+vn_name+".mc.route.0,"
         status, data = self.introspect_access(host, parameter)
+        if target != "":
+            result = {}
+            result[target] = []
+            try:
+                for item in data["__Inet4McRouteResp_list"]["Inet4McRouteResp"]["route_list"]["list"]["RouteUcSandeshData"]:
+                    if item["src_ip"] == target:
+                        result[target].append(item)
+            except:
+                pass
+            data = result
         return status, data
 
 
-    def introspect_get_all_routes(self, host="", vn_name="", vrf_id=""):
+    def introspect_get_all_routes(self, host="", vn_name="", vrf_id="", target_ip="", target=""):
         routes = {}
-        status, data = self.introspect_get_Inet4UcRoute(host=host, vn_name=vn_name)
+        status, data = self.introspect_get_Inet4UcRoute(host=host, vn_name=vn_name, target=target)
         routes["Inet4UcRoute"] = data
-        status, data = self.introspect_get_Inet6UcRoute(host=host, vn_name=vn_name)
+        status, data = self.introspect_get_Inet6UcRoute(host=host, vn_name=vn_name, target=target)
         routes["Inet6UcRoute"] = data
-        status, data = self.introspect_get_Inet4McRoute(host=host, vn_name=vn_name)
+        status, data = self.introspect_get_Inet4McRoute(host=host, vn_name=vn_name, target=target)
         routes["Inet4McRoute"] = data
-        status, data = self.introspect_get_Layer2Route(host=host, vn_name=vn_name)
+        status, data = self.introspect_get_Layer2Route(host=host, vn_name=vn_name, target=target)
         routes["InetLayer2Route"] = data
         return routes
 
@@ -489,7 +525,6 @@ class my_openstack(my_client):
             return "" 
         for service in self.auth_data["access"]["serviceCatalog"]:
             if service["name"] == "heat":
-                print jsonpretty(service)
                 url = service["endpoints"][0]["publicURL"]+"/stacks"
         
         payload = {}
@@ -508,6 +543,35 @@ class my_openstack(my_client):
         logger.debug(get_curl_command(url, "GET", headers, payload))
 
         r = requests.post(url, verify=False, headers=headers, data=json.dumps(payload))
+        status = r.status_code
+        if status == 404:
+            return status, { "Error": r.text }
+        data = r.json()
+        logger.info("status:"+str(r.status_code))
+        logger.debug("data:"+jsonpretty(r.json()))
+        return status, data
+
+
+    def stack_delete(self, stack_name, template, parameters):
+        #curl -g -i -X DELETE http://192.168.1.41:8004/v1/70e91610a76440e785beb11413eab6a2/stacks/rendo -H "User-Agent: python-heatclient" -H "Accept: application/json" -H "X-Auth-Token: {SHA1}16410a5955662232868ddd255781ea6227409c12"
+        '''TODO: check expiration time instead of re-auth every time'''
+        url = ""
+        data = {}
+        self.auth()
+        if self.auth_status != 200:
+            return "" 
+        for service in self.auth_data["access"]["serviceCatalog"]:
+            if service["name"] == "heat":
+                url = service["endpoints"][0]["publicURL"]+"/stacks"
+        
+        headers = {'Content-Type':'application/json', 'Cache-Control': 'no-cache', 'X-Auth-Token': self.token }
+        if url == "":
+            return ""
+
+        logger.info("url = "+url)
+        logger.debug(get_curl_command(url, "GET", headers, payload))
+
+        r = requests.delete(url, verify=False, headers=headers)
         status = r.status_code
         if status == 404:
             return status, { "Error": r.text }
@@ -563,7 +627,6 @@ if __name__ == "__main__":
 
         if args.contrail_get_resource:
             status, data = contrail_client.get_resource_url()
-            #print "HTTP status code: "+str(status)
             if args.csv:
                 print json_to_csv(data)
             else:
@@ -580,7 +643,6 @@ if __name__ == "__main__":
         if args.contrail_list:
             '''example: list instances'''
             status, data = contrail_client.list(args.contrail_list)
-            #print "HTTP status code: "+str(status)
             if args.csv:
                 print json_to_csv(data)
             else:
@@ -605,7 +667,6 @@ if __name__ == "__main__":
         if args.contrail_analytic_list:
             '''example: list instances'''
             status, data = contrail_client.list(args.contrail_analytic_list,is_analytic=True)
-            #print "HTTP status code: "+str(status)
             if args.csv:
                 print json_to_csv(data)
             else:
@@ -630,7 +691,10 @@ if __name__ == "__main__":
                 print jsonpretty(data)
             
         if args.contrail_vrouter_get_vrf_routes and args.contrail_vrouter_host: 
-            data = contrail_client.introspect_get_all_routes(args.contrail_vrouter_host, args.contrail_vrouter_get_vrf_routes)
+            if args.contrail_vrouter_route_dest:
+                data = contrail_client.introspect_get_all_routes(args.contrail_vrouter_host, args.contrail_vrouter_get_vrf_routes, target=args.contrail_vrouter_route_dest)
+            else:
+                data = contrail_client.introspect_get_all_routes(args.contrail_vrouter_host, args.contrail_vrouter_get_vrf_routes)
             print jsonpretty(data)
 
 
@@ -653,7 +717,6 @@ if __name__ == "__main__":
 
     if args.list:
         status, data = client.list(args.list, is_detail=args.detail)
-        #print "HTTP status code: "+str(status)
         if args.csv:
             print json_to_csv(data)
         else:
@@ -668,7 +731,6 @@ if __name__ == "__main__":
             print "{ 'Error': '--name must not be empty. The correct syntax is --show <component name> --value <component ID>'}"
             sys.exit(103)
         status, data = client.list(args.show, is_show=True, resource_id=args.value)
-        #print "HTTP status code: "+str(status)
         if args.csv:
             print json_to_csv(data)
         else:
