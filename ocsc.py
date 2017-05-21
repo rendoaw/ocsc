@@ -108,6 +108,7 @@ def arguments_parser():
     parser.add_argument('--value', nargs='?', const=1, default="", type=str, help='find resource by/show this value' )
     parser.add_argument('--show', help='show component instances' )
     parser.add_argument('--detail', action='store_true', help='enable detail mode' )
+    parser.add_argument('--delete-by-url', help='Delete component by its URL' )
     parser.add_argument('--stack-template', help='HEAT stack template file' )
     parser.add_argument('--stack-parameter', help='HEAT stack parameter in json format' )
     parser.add_argument('--stack-parameter-file', help='HEAT stack parameter file' )
@@ -128,6 +129,8 @@ def arguments_parser():
     parser.add_argument('--contrail-vrouter-route-dest', help='Get routing table for specified IP. Usage: --contrail-vrouter-get-vrf-routes <vrfname>  --contrail-vrouter-host <vrouter hostname/IP> --contrail-vrouter-route-ip <IP address/Network Address>' )
     parser.add_argument('--contrail-vrouter-list-vrf', action='store_true', help='List VRF available in specific compute node. Usage: --contrail-vrouter-list-vrf --contrail-vrouter-host <vrouter hostname/IP>' )
     parser.add_argument('--contrail-vrouter-host', help='vrouter hostname or IP' )
+    parser.add_argument('--contrail-set-mode', help='contrail set forwarding mode' )
+    parser.add_argument('--contrail-vnet-name', help='contrail virtual network name' )
     parser.set_defaults(detail=False)
     args = parser.parse_args()
     return args
@@ -436,6 +439,39 @@ class my_contrail(my_client):
         return routes
 
 
+    def update_data(self, url, data):
+        '''TODO: check expiration time instead of re-auth every time'''
+        self.auth()
+        if self.auth_status != 200:
+            return "" 
+        
+        headers = {'Content-Type':'application/json', 'Cache-Control': 'no-cache', 'X-Auth-Token': self.token }
+        logger.info("url = "+url)
+        logger.debug(get_curl_command(url, "PUT", headers, None))
+        r = requests.put(url, verify=False, headers=headers, data=json.dumps(data))
+        status = r.status_code
+        if status == 404:
+            return status, { "Error": r.text }
+        self.service_data = r.json()
+        logger.info("status:"+str(r.status_code))
+        logger.debug("data:"+jsonpretty(r.json()))
+        return status, data
+       
+
+    def set_forwarding_mode(self, vnet_name, vnet_mode):
+        data = self.find('virtual-network', target_id=vnet_name, target_field='fq_name', id_field="uuid")
+        for i in data:
+            put_data = data[i]
+            if 'virtual_network_properties' not in put_data['virtual-network']:
+                put_data['virtual-network']['virtual_network_properties'] = {}
+            url = put_data['virtual-network']['href']
+            put_data['virtual-network']['virtual_network_properties']['forwarding_mode'] = vnet_mode
+            put_data['virtual-network']['virtual_network_properties']['rpf'] = 'disable'
+            put_data['virtual-network']['virtual_network_properties']['allow_transit'] = True
+            put_data['virtual-network']['virtual_network_properties']['mirror_destination'] = False
+            put_data['virtual-network']['port_security_enabled'] = False
+            self.update_data(url, put_data)
+
 
 
 
@@ -552,32 +588,26 @@ class my_openstack(my_client):
         return status, data
 
 
-    def stack_delete(self, stack_name, template, parameters):
+    def delete_by_url(self, url):
         #curl -g -i -X DELETE http://192.168.1.41:8004/v1/70e91610a76440e785beb11413eab6a2/stacks/rendo -H "User-Agent: python-heatclient" -H "Accept: application/json" -H "X-Auth-Token: {SHA1}16410a5955662232868ddd255781ea6227409c12"
         '''TODO: check expiration time instead of re-auth every time'''
-        url = ""
         data = {}
         self.auth()
         if self.auth_status != 200:
             return "" 
-        for service in self.auth_data["access"]["serviceCatalog"]:
-            if service["name"] == "heat":
-                url = service["endpoints"][0]["publicURL"]+"/stacks"
         
         headers = {'Content-Type':'application/json', 'Cache-Control': 'no-cache', 'X-Auth-Token': self.token }
-        if url == "":
-            return ""
-
-        logger.info("url = "+url)
-        logger.debug(get_curl_command(url, "GET", headers, payload))
-
+        logger.debug(get_curl_command(url, "GET", headers, payload=None))
+        
         r = requests.delete(url, verify=False, headers=headers)
         status = r.status_code
         if status == 404:
             return status, { "Error": r.text }
-        data = r.json()
         logger.info("status:"+str(r.status_code))
-        logger.debug("data:"+jsonpretty(r.json()))
+        try:
+            data = r.json()
+        except:
+            data = {}
         return status, data
 
 
@@ -616,6 +646,8 @@ if __name__ == "__main__":
         is_contrail_mode = True
     if args.contrail_vrouter_get_vrf_routes or args.contrail_vrouter_list_vrf or args.contrail_vrouter_host:
         is_contrail_mode = True
+    if args.contrail_set_mode:
+        is_contrail_mode = True
     
     '''initialize contrail client only if any contrail related parameter is detected'''
     if is_contrail_mode == True:
@@ -624,6 +656,11 @@ if __name__ == "__main__":
         if args.contrail_find:
             data = contrail_client.find(args.contrail_find, target_id=args.contrail_value, target_field=args.contrail_key, id_field="uuid")
             print jsonpretty(data)
+
+        if args.contrail_set_mode:
+            vnet_name = args.contrail_vnet_name
+            vnet_mode = args.contrail_set_mode
+            data = contrail_client.set_forwarding_mode(vnet_name, vnet_mode)
 
         if args.contrail_get_resource:
             status, data = contrail_client.get_resource_url()
@@ -702,6 +739,10 @@ if __name__ == "__main__":
     '''initialize openstack client'''
     client = my_openstack(auth_url=env["OS_AUTH_URL"]+"/tokens", username=env["OS_USERNAME"], password=env["OS_PASSWORD"], tenant=env["OS_TENANT_NAME"])
 
+    if args.delete_by_url:
+        status, data = client.delete_by_url(args.delete_by_url)
+        print "HTTP Status Code: "+ str(status)
+        print jsonpretty(data)
 
     if args.find:
         data = client.find(args.find, target_id=args.value, target_field=args.key, id_field="id")
