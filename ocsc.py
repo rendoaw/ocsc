@@ -470,10 +470,11 @@ class my_contrail(my_client):
             put_data['virtual-network']['virtual_network_properties']['allow_transit'] = True
             put_data['virtual-network']['virtual_network_properties']['mirror_destination'] = False
             put_data['virtual-network']['port_security_enabled'] = False
+            put_data['virtual-network']['flood_unknown_unicast'] = True
             self.update_data(url, put_data)
         data = self.find('virtual-network', target_id=vnet_name, target_field='fq_name', id_field="uuid")
         print url
-        print jsonpretty(data[i]['virtual-network']['virtual_network_properties'])
+        print jsonpretty(data[i])
 
 
 
